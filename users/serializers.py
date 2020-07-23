@@ -2,18 +2,50 @@ from rest_framework import serializers
 from .models import User
 
 
-class UserSerializer(serializers.ModelSerializer):
+class RelatedUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-
-        # 배제할 field
-        exclude = (
-            "groups",
-            "password",
-            "user_permissions",
-            "last_login",
-            "is_superuser",
-            "is_active",
-            "date_joined",
-            "favs",
+        fields = (
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "avatar",
+            "superhost",
         )
+
+
+class UserSerializer(serializers.ModelSerializer):
+
+    # write_only=True 옵션으로 패스워드를 안보여줄수 있음
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = (
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "avatar",
+            "superhost",
+            "password",
+        )
+
+        read_only_fields = (
+            "id",
+            "superhost",
+            "avatar",
+        )
+
+    def validated_first_name(self, value):
+        print(value)
+        return value.upper()
+
+    def create(self, validated_data):
+        password = validated_data.get("password")
+        user = super().create(validated_data)
+        user.set_password(password)
+        user.save()
+        return user
